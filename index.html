@@ -1,243 +1,163 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Create Renovation Contract — REI Task</title>
-<style>
-  :root{--bg:#071026;--card:#0f1724;--muted:#9ca3af;--accent:#06b6d4;--white:#fff}
-  body{font-family:Inter,system-ui,Arial,Helvetica,sans-serif;margin:0;background:linear-gradient(180deg,#071028 0,#081426 100%);color:var(--white);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:18px}
-  .container{max-width:900px;width:100%;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:12px;padding:18px;box-shadow:0 10px 40px rgba(2,6,23,0.6)}
-  h1{margin:0 0 6px;font-size:20px}
-  p.lead{margin:0 0 14px;color:var(--muted)}
-  .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-  label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
-  input[type="text"],input[type="email"],input[type="date"],input[type="number"],textarea,select{
-    width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:rgba(255,255,255,0.02);color:var(--white);
-    box-sizing:border-box;font-size:14px}
-  textarea{min-height:100px;resize:vertical}
-  .full{grid-column:1/ -1}
-  .row{display:flex;gap:8px}
-  .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:10px;border:0;cursor:pointer;font-weight:600}
-  .btn-primary{background:var(--accent);color:#052023}
-  .btn-ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--white)}
-  .small{font-size:13px;color:var(--muted)}
-  .scope-list{display:flex;flex-direction:column;gap:8px;margin-bottom:8px}
-  .scope-item{display:flex;gap:8px}
-  .scope-item input{flex:1}
-  .controls{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
-  .notice{font-size:13px;color:var(--muted);margin-top:12px}
-  .success, .error {padding:12px;border-radius:8px;margin-top:12px}
-  .success{background:rgba(16,185,129,0.12);color:#10b981}
-  .error{background:rgba(239,68,68,0.12);color:#ef4444}
-  footer{margin-top:12px;color:var(--muted);font-size:13px}
-  @media(max-width:720px){.grid{grid-template-columns:1fr}}
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Contract Generator</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f7fb;
+      padding: 20px;
+      margin: 0;
+    }
+    .container {
+      max-width: 600px;
+      margin: auto;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    h2 {
+      text-align: center;
+      color: #333;
+    }
+    label {
+      font-weight: bold;
+      margin-top: 15px;
+      display: block;
+    }
+    input, textarea {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 16px;
+    }
+    button {
+      margin-top: 20px;
+      width: 100%;
+      padding: 14px;
+      background: #00a8e8;
+      border: none;
+      color: white;
+      font-size: 18px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #008ac1;
+    }
+    .error {
+      margin-top: 15px;
+      padding: 12px;
+      background: #ffdddd;
+      color: #c00000;
+      border-left: 4px solid #c00000;
+      display: none;
+    }
+    .success {
+      margin-top: 15px;
+      padding: 12px;
+      background: #ddffdd;
+      color: #008800;
+      border-left: 4px solid #008800;
+      display: none;
+    }
+  </style>
 </head>
 <body>
-  <div class="container" role="main">
-    <h1>Create Renovation Contract (Draft)</h1>
-    <p class="lead">Fill fields, add as many scope items as needed, and submit to generate a contract draft & send for review.</p>
 
-    <form id="contractForm">
-      <div class="grid">
-        <div>
-          <label>Agreement Date</label>
-          <input type="date" name="agreement_date" value="" required />
-        </div>
+<div class="container">
+  <h2>Contract Form</h2>
 
-        <div>
-          <label>Client (fixed)</label>
-          <input type="text" name="client_name" value="REI Task" readonly />
-        </div>
+  <div id="error" class="error"></div>
+  <div id="success" class="success"></div>
 
-        <div>
-          <label>Contractor Name</label>
-          <input type="text" name="contractor_name" placeholder="ABC Electric LLC" required />
-        </div>
+  <form id="contractForm">
 
-        <div>
-          <label>Contractor Email</label>
-          <input type="email" name="contractor_email" placeholder="contractor@example.com" />
-        </div>
+    <label>Agreement Date</label>
+    <input type="date" name="agreement_date" required>
 
-        <div class="full">
-          <label>Property Address</label>
-          <input type="text" name="property_address" placeholder="6047 Hillman Ave Cleveland Ohio 44127" required />
-        </div>
+    <label>Contractor Name</label>
+    <input type="text" name="contractor_name" required>
 
-        <div class="full">
-          <label>Job Title</label>
-          <input type="text" name="job_title" placeholder="Install breaker boxes and grounding system" />
-        </div>
+    <label>Property Address</label>
+    <input type="text" name="property_address" required>
 
-        <div class="full">
-          <label>Scope of Work</label>
+    <label>Scope Items (one per line)</label>
+    <textarea name="scope_items" rows="4" required></textarea>
 
-          <div id="scopeList" class="scope-list" aria-live="polite">
-            <!-- initial 3 items -->
-            <div class="scope-item"><input name="scope[]" type="text" placeholder="Pull the required electrical permit" required /><button type="button" class="btn btn-ghost" onclick="removeScope(this)" title="Remove">✕</button></div>
-            <div class="scope-item"><input name="scope[]" type="text" placeholder="Install three breaker boxes" required /><button type="button" class="btn btn-ghost" onclick="removeScope(this)" title="Remove">✕</button></div>
-            <div class="scope-item"><input name="scope[]" type="text" placeholder="Install a 3-gang meter box with disconnect" required /><button type="button" class="btn btn-ghost" onclick="removeScope(this)" title="Remove">✕</button></div>
-          </div>
+    <label>Timeline Start</label>
+    <input type="date" name="timeline_start" required>
 
-          <div class="row" style="margin-top:6px">
-            <input id="newScope" type="text" placeholder="Add scope item..." />
-            <button type="button" class="btn btn-primary" onclick="addScope()">Add</button>
-          </div>
-        </div>
+    <label>Timeline End</label>
+    <input type="date" name="timeline_end" required>
 
-        <div>
-          <label>Timeline Start</label>
-          <input type="date" name="timeline_start" required />
-        </div>
+    <label>Payment 1 – due on signing</label>
+    <input type="number" name="payment1_due" required>
 
-        <div>
-          <label>Timeline End</label>
-          <input type="date" name="timeline_end" required />
-        </div>
+    <label>Payment 2 – due on inspection</label>
+    <input type="number" name="payment2_due" required>
 
-        <div>
-          <label>Payment 1 - due on signing</label>
-          <input type="number" name="payment1_due" value="2400" step="0.01" required />
-        </div>
+    <label>Payment 2 partial release amount</label>
+    <input type="number" name="payment2_partial" required>
 
-        <div>
-          <label>Payment 2 - due on inspection</label>
-          <input type="number" name="payment2_due" value="2400" step="0.01" required />
-        </div>
+    <label>Payment 3 – final</label>
+    <input type="number" name="payment3_due" required>
 
-        <div>
-          <label>Payment 2 partial release amount</label>
-          <input type="number" name="inspection_partial_release" value="1200" step="0.01" />
-        </div>
+    <label>Quality Standards</label>
+    <textarea name="quality_standards" rows="3" required></textarea>
 
-        <div>
-          <label>Payment 3 - final</label>
-          <input type="number" name="payment3_due" value="1200" step="0.01" required />
-        </div>
+    <label>Reviewer Email</label>
+    <input type="email" name="reviewer_email" required>
 
-        <div class="full">
-          <label>Quality Standards (text)</label>
-          <textarea name="quality_standards" placeholder="All old materials removed, work meets NEC code..." ></textarea>
-        </div>
+    <label>Additional Notes</label>
+    <textarea name="additional_notes" rows="3"></textarea>
 
-        <div class="full">
-          <label>Reviewer Email (who receives the review link)</label>
-          <input type="email" name="reviewer_email" placeholder="owner@example.com" required />
-        </div>
-
-        <div class="full">
-          <label>Additional Notes</label>
-          <textarea name="notes" placeholder="Any additional instructions or notes"></textarea>
-        </div>
-      </div>
-
-      <div class="controls">
-        <button type="button" class="btn btn-ghost" onclick="resetForm()">Reset</button>
-        <button type="submit" class="btn btn-primary">Create Draft & Send</button>
-      </div>
-
-      <div id="status" class="notice small" aria-live="polite"></div>
-    </form>
-
-    <div id="result"></div>
-    <footer>After submission the reviewer will receive a link to review and approve the draft.</footer>
-  </div>
+    <button type="submit">Create Draft & Send</button>
+  </form>
+</div>
 
 <script>
-  // ========== CONFIG ==========
-  // Test webhook URL (already set for you)
-  const WEBHOOK_URL = "https://velayudhansyam.app.n8n.cloud/webhook/contract/create";
+  const form = document.getElementById("contractForm");
+  const errorBox = document.getElementById("error");
+  const successBox = document.getElementById("success");
 
-  // ===== helpers for scope list =====
-  function addScope() {
-    const v = document.getElementById('newScope').value.trim();
-    if (!v) return;
-    const container = document.getElementById('scopeList');
-    const el = document.createElement('div');
-    el.className = 'scope-item';
-    el.innerHTML = `<input name="scope[]" type="text" value="${escapeHtml(v)}" required /><button type="button" class="btn btn-ghost" onclick="removeScope(this)">✕</button>`;
-    container.appendChild(el);
-    document.getElementById('newScope').value = '';
-  }
-  function removeScope(btn) {
-    const node = btn.closest('.scope-item');
-    if (node) node.remove();
-  }
-  function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c]); }
+  form.addEventListener("submit", async function (e) {
+    e.preventDefault();
 
-  // ===== form submit =====
-  document.getElementById('contractForm').addEventListener('submit', async (ev) => {
-    ev.preventDefault();
+    errorBox.style.display = "none";
+    successBox.style.display = "none";
 
-    const form = ev.target;
-    const formData = new FormData(form);
+    const data = Object.fromEntries(new FormData(form).entries());
 
-    // build payload expected by your template variables
-    const payload = {
-      agreement_date: formData.get('agreement_date') || new Date().toISOString().slice(0,10),
-      client_name: formData.get('client_name') || 'REI Task',
-      contractor_name: formData.get('contractor_name') || '',
-      contractor_email: formData.get('contractor_email') || '',
-      property_address: formData.get('property_address') || '',
-      job_title: formData.get('job_title') || '',
-      scope_of_work: Array.from(formData.getAll('scope[]')).filter(Boolean),
-      timeline_start: formData.get('timeline_start') || '',
-      timeline_end: formData.get('timeline_end') || '',
-      payment1_due: Number(formData.get('payment1_due') || 0),
-      payment2_due: Number(formData.get('payment2_due') || 0),
-      inspection_partial_release: Number(formData.get('inspection_partial_release') || 0),
-      payment3_due: Number(formData.get('payment3_due') || 0),
-      quality_standards: formData.get('quality_standards') || '',
-      reviewer_email: formData.get('reviewer_email') || '',
-      notes: formData.get('notes') || ''
-    };
-
-    // UI
-    const status = document.getElementById('status');
-    status.textContent = 'Sending…';
-    status.className = 'notice small';
-
-    if (!WEBHOOK_URL || WEBHOOK_URL === 'YOUR_WEBHOOK_URL_HERE') {
-      status.textContent = 'Error: edit the HTML and set WEBHOOK_URL to your webhook URL before using this form.';
-      status.className = 'error';
-      return;
-    }
+    // Convert scope_items into array
+    data.scope_items = data.scope_items.split("\n").map(s => s.trim()).filter(s => s);
 
     try {
-      const res = await fetch(WEBHOOK_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+      const response = await fetch("https://velayudhansyam.app.n8n.cloud/webhook/contract/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
       });
 
-      if (!res.ok) {
-        const text = await res.text().catch(()=>null);
-        status.textContent = 'Server error: ' + (res.status + ' ' + res.statusText) + (text ? ' — ' + text : '');
-        status.className = 'error';
-        return;
+      if (!response.ok) {
+        throw new Error("Server returned " + response.status);
       }
 
-      status.textContent = 'Draft created & sent for review. Reviewer should get an email soon.';
-      status.className = 'success';
-
-      const txt = await res.text().catch(()=>null);
-      if (txt) {
-        const out = document.getElementById('result');
-        out.innerHTML = '<pre style="white-space:pre-wrap;color:var(--muted);background:rgba(255,255,255,0.02);padding:10px;border-radius:8px;margin-top:12px;">' + escapeHtml(txt) + '</pre>';
-      }
+      successBox.innerText = "Draft sent successfully!";
+      successBox.style.display = "block";
       form.reset();
-      // keep one empty scope item
-      const container = document.getElementById('scopeList');
-      container.innerHTML = `<div class="scope-item"><input name="scope[]" type="text" placeholder="Add scope item" required /><button type="button" class="btn btn-ghost" onclick="removeScope(this)">✕</button></div>`;
+
     } catch (err) {
-      status.textContent = 'Network error: ' + (err && err.message ? err.message : String(err));
-      status.className = 'error';
+      errorBox.innerText = "Error: " + err.message;
+      errorBox.style.display = "block";
     }
   });
-
-  function resetForm(){ document.getElementById('contractForm').reset(); document.getElementById('status').textContent=''; document.getElementById('result').innerHTML=''; }
 </script>
+
 </body>
 </html>
