@@ -10,16 +10,66 @@
       font-family: Arial, sans-serif;
       background: #f7f7f7;
       padding: 20px;
+      margin: 0;
+    }
 
-<p style="margin-top:12px;">
-  <a
-    id="openPdf"
-    target="_blank"
-    style="display:inline-block;padding:10px 16px;background:#1E90FF;color:#fff;border-radius:6px;text-decoration:none;">
-    Open Contract in Full Screen
-  </a>
-</p>
+    .container {
+      max-width: 900px;
+      margin: auto;
+      background: #ffffff;
+      padding: 16px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
 
-<script>
-  document.getElementById("openPdf").href = pdfUrl;
-      </script>
+    iframe {
+      width: 100%;
+      height: 70vh;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      background: #eee;
+    }
+
+    .btn {
+      display: inline-block;
+      margin-top: 12px;
+      padding: 10px 16px;
+      background: #1E90FF;
+      color: #ffffff;
+      text-decoration: none;
+      border-radius: 6px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h2>Review & Approve Contract</h2>
+
+    <iframe id="pdfFrame"></iframe>
+
+    <a id="openPdf" class="btn" target="_blank">
+      Open Contract in Full Screen
+    </a>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const fileId = params.get("fileId");
+    const token = params.get("token");
+
+    if (!fileId || !token) {
+      document.body.innerHTML = "<h3>Invalid or missing link</h3>";
+    } else {
+      const pdfUrl =
+        "https://velayudhansyam.app.n8n.cloud/webhook/contract-approval" +
+        "?action=view&fileId=" + encodeURIComponent(fileId) +
+        "&token=" + encodeURIComponent(token);
+
+      document.getElementById("pdfFrame").src = pdfUrl;
+      document.getElementById("openPdf").href = pdfUrl;
+    }
+  </script>
+</body>
+</html>
