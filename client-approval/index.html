@@ -1,124 +1,134 @@
-<!-- Contract Preview -->
-<iframe
-  id="contractFrame"
-  src=""
-  width="100%"
-  height="500"
-  style="border:1px solid #ccc;margin-bottom:20px;"
-></iframe>
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <title>Approve Contract</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
   <style>
     body {
       font-family: Arial, sans-serif;
       background: #f7f7f7;
-      padding: 40px;
-      text-align: center;
+      padding: 20px;
     }
-    .card {
-      background: #ffffff;
-      padding: 30px;
-      max-width: 600px;
+
+    .container {
+      max-width: 900px;
       margin: auto;
-      border-radius: 8px;
+    }
+
+    iframe {
+      width: 100%;
+      height: 500px;
+      border: 1px solid #ccc;
+      margin-bottom: 20px;
+      background: #fff;
+    }
+
+    .card {
+      background: #fff;
+      padding: 25px;
+      border-radius: 10px;
+      text-align: center;
       box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     }
-    h1 {
-      color: #111;
-    }
-    button {
-      margin-top: 20px;
+
+    button, a.button {
+      display: inline-block;
+      margin: 10px;
       padding: 14px 22px;
+      border-radius: 8px;
       font-size: 16px;
+      font-weight: bold;
       border: none;
-      border-radius: 6px;
       cursor: pointer;
-      background: #16a34a;
-      color: white;
+      text-decoration: none;
+      color: #fff;
     }
-    button:disabled {
-      background: #9ca3af;
+
+    .view {
+      background: #1e90ff;
+    }
+
+    .approve {
+      background: #28a745;
+    }
+
+    .approve:disabled {
+      background: #9acfa5;
       cursor: not-allowed;
     }
-    .success {
-      color: #16a34a;
+
+    .status {
+      margin-top: 15px;
       font-weight: bold;
-      margin-top: 20px;
-    }
-    .error {
-      color: #dc2626;
-      font-weight: bold;
-      margin-top: 20px;
     }
   </style>
 </head>
+
 <body>
-  <div class="card">
-    <h1>Review & Approve Contract</h1>
-    <p>Please confirm that you approve the contract draft.</p>
+  <div class="container">
 
-    <button id="approveBtn">✅ Approve Contract</button>
+    <!-- PDF PREVIEW -->
+    <iframe id="contractFrame"></iframe>
 
-    <p id="status"></p>
+    <div class="card">
+      <h2>Review & Approve Contract</h2>
+      <p>Please review the contract before approving.</p>
+
+      <!-- View Draft Button -->
+      <a id="viewBtn" class="button view" target="_blank">
+        📄 View Draft (Open PDF)
+      </a>
+
+      <!-- Approve Button -->
+      <button id="approveBtn" class="approve">
+        ✅ Approve Contract
+      </button>
+
+      <div id="status" class="status"></div>
+    </div>
+
   </div>
 
   <script>
     const params = new URLSearchParams(window.location.search);
-    const contractId = params.get("contract_id");
+    const fileId = params.get("fileId");
+    const token = params.get("token");
 
-    const approveBtn = document.getElementById("approveBtn");
-    const statusEl = document.getElementById("status");
-
-    if (!contractId) {
-      approveBtn.disabled = true;
-      statusEl.textContent = "❌ Invalid contract link.";
-      statusEl.className = "error";
+    if (!fileId || !token) {
+      alert("Invalid or missing contract link.");
+      throw new Error("Missing parameters");
     }
 
-    approveBtn.onclick = async () => {
-      approveBtn.disabled = true;
-      approveBtn.textContent = "Processing...";
+    const pdfUrl =
+      "https://velayudhansyam.app.n8n.cloud/webhook/contract-approval" +
+      `?action=view&fileId=${fileId}&token=${token}`;
+
+    const approveUrl =
+      "https://velayudhansyam.app.n8n.cloud/webhook/contract-approval" +
+      `?action=approve&fileId=${fileId}&token=${token}`;
+
+    // Set iframe preview
+    document.getElementById("contractFrame").src = pdfUrl;
+
+    // Set View Draft button
+    document.getElementById("viewBtn").href = pdfUrl;
+
+    // Approve button handler
+    document.getElementById("approveBtn").onclick = async () => {
+      const statusEl = document.getElementById("status");
+      statusEl.textContent = "Approving contract…";
 
       try {
-        const res = await fetch("https://YOUR_N8N_DOMAIN/webhook/contract-approve", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contract_id: contractId,
-            status: "approved",
-            approved_at: new Date().toISOString()
-          })
-        });
-
+        const res = await fetch(approveUrl, { method: "POST" });
         if (!res.ok) throw new Error("Approval failed");
 
         statusEl.textContent = "✅ Contract approved successfully.";
-        statusEl.className = "success";
       } catch (err) {
-        approveBtn.disabled = false;
-        approveBtn.textContent = "✅ Approve Contract";
-        statusEl.textContent = "❌ Something went wrong. Please try again.";
-        statusEl.className = "error";
+        statusEl.textContent = "❌ Failed to approve contract.";
       }
     };
-<script>
-  // Read query parameters
-  const params = new URLSearchParams(window.location.search);
-  const fileId = params.get("fileId");
-  const token = params.get("token");
-
-  if (!fileId || !token) {
-    alert("Invalid or missing contract link.");
-  } else {
-    // This URL should point to your n8n VIEW webhook
-    const pdfUrl = `https://velayudhansyam.app.n8n.cloud/webhook/contract-approval?action=view&fileId=${fileId}&token=${token}`;
-
-    // Load PDF into iframe
-    document.getElementById("contractFrame").src = pdfUrl;
-  }
-</script>  </script>
+  </script>
 </body>
 </html>
