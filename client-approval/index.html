@@ -104,6 +104,21 @@
         statusEl.className = "error";
       }
     };
-  </script>
+<script>
+  // Read query parameters
+  const params = new URLSearchParams(window.location.search);
+  const fileId = params.get("fileId");
+  const token = params.get("token");
+
+  if (!fileId || !token) {
+    alert("Invalid or missing contract link.");
+  } else {
+    // This URL should point to your n8n VIEW webhook
+    const pdfUrl = `https://velayudhansyam.app.n8n.cloud/webhook/contract-approval?action=view&fileId=${fileId}&token=${token}`;
+
+    // Load PDF into iframe
+    document.getElementById("contractFrame").src = pdfUrl;
+  }
+</script>  </script>
 </body>
 </html>
