@@ -1,8 +1,9 @@
+
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Contract Approved</title>
+  <meta charset="UTF-8" />
+  <title>Approve Contract</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -19,20 +20,83 @@
       box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     }
     h1 {
-      color: #28a745;
+      color: #111;
     }
-    p {
+    button {
+      margin-top: 20px;
+      padding: 14px 22px;
       font-size: 16px;
-      color: #333;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      background: #16a34a;
+      color: white;
+    }
+    button:disabled {
+      background: #9ca3af;
+      cursor: not-allowed;
+    }
+    .success {
+      color: #16a34a;
+      font-weight: bold;
+      margin-top: 20px;
+    }
+    .error {
+      color: #dc2626;
+      font-weight: bold;
+      margin-top: 20px;
     }
   </style>
 </head>
 <body>
   <div class="card">
-    <h1>✅ Contract Approved</h1>
-    <p>Thank you for reviewing the draft contract.</p>
-    <p>The agreement has been approved and will now be sent to the contractor for signature.</p>
-    <p>No further action is needed from you.</p>
+    <h1>Review & Approve Contract</h1>
+    <p>Please confirm that you approve the contract draft.</p>
+
+    <button id="approveBtn">✅ Approve Contract</button>
+
+    <p id="status"></p>
   </div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const contractId = params.get("contract_id");
+
+    const approveBtn = document.getElementById("approveBtn");
+    const statusEl = document.getElementById("status");
+
+    if (!contractId) {
+      approveBtn.disabled = true;
+      statusEl.textContent = "❌ Invalid contract link.";
+      statusEl.className = "error";
+    }
+
+    approveBtn.onclick = async () => {
+      approveBtn.disabled = true;
+      approveBtn.textContent = "Processing...";
+
+      try {
+        const res = await fetch("https://YOUR_N8N_DOMAIN/webhook/contract-approve", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contract_id: contractId,
+            status: "approved",
+            approved_at: new Date().toISOString()
+          })
+        });
+
+        if (!res.ok) throw new Error("Approval failed");
+
+        statusEl.textContent = "✅ Contract approved successfully.";
+        statusEl.className = "success";
+      } catch (err) {
+        approveBtn.disabled = false;
+        approveBtn.textContent = "✅ Approve Contract";
+        statusEl.textContent = "❌ Something went wrong. Please try again.";
+        statusEl.className = "error";
+      }
+    };
+  </script>
 </body>
 </html>
