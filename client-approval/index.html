@@ -40,6 +40,30 @@
       border-radius: 6px;
       font-weight: bold;
     }
+
+    .approve-btn {
+      display: block;
+      width: 100%;
+      margin-top: 16px;
+      padding: 14px;
+      background: #28a745;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .approve-btn:disabled {
+      background: #999;
+      cursor: not-allowed;
+    }
+
+    #statusMsg {
+      margin-top: 12px;
+      font-weight: bold;
+    }
   </style>
 </head>
 
@@ -52,6 +76,12 @@
     <a id="openPdf" class="btn" target="_blank">
       Open Contract in Full Screen
     </a>
+
+    <button id="approveBtn" class="approve-btn">
+      ✍️ Approve & Sign Contract
+    </button>
+
+    <p id="statusMsg"></p>
   </div>
 
   <script>
@@ -61,15 +91,52 @@
 
     if (!fileId || !token) {
       document.body.innerHTML = "<h3>Invalid or missing link</h3>";
-    } else {
-      const pdfUrl =
-        "https://velayudhansyam.app.n8n.cloud/webhook/contract-approval" +
-        "?action=view&fileId=" + encodeURIComponent(fileId) +
-        "&token=" + encodeURIComponent(token);
-
-      document.getElementById("pdfFrame").src = pdfUrl;
-      document.getElementById("openPdf").href = pdfUrl;
+      throw new Error("Missing parameters");
     }
+
+    const viewUrl =
+      "https://velayudhansyam.app.n8n.cloud/webhook/contract-approval" +
+      "?action=view" +
+      "&fileId=" + encodeURIComponent(fileId) +
+      "&token=" + encodeURIComponent(token);
+
+    document.getElementById("pdfFrame").src = viewUrl;
+    document.getElementById("openPdf").href = viewUrl;
+
+    document.getElementById("approveBtn").addEventListener("click", async () => {
+      const btn = document.getElementById("approveBtn");
+      const status = document.getElementById("statusMsg");
+
+      btn.disabled = true;
+      status.innerText = "Submitting approval…";
+
+      try {
+        const res = await fetch(
+          "https://velayudhansyam.app.n8n.cloud/webhook/contract-approval",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              action: "approve",
+              fileId,
+              token,
+              userAgent: navigator.userAgent
+            })
+          }
+        );
+
+        if (!res.ok) throw new Error("Approval failed");
+
+        btn.innerText = "✅ Contract Approved";
+        status.innerText =
+          "Thank you. Your approval has been successfully recorded.";
+
+      } catch (err) {
+        btn.disabled = false;
+        status.innerText =
+          "❌ Approval failed. Please refresh and try again.";
+      }
+    });
   </script>
 </body>
 </html>
