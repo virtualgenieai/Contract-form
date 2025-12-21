@@ -46,15 +46,18 @@
     document.getElementById("signBtn").onclick = async () => {
       document.getElementById("status").textContent = "Signing…";
 
-      await fetch("https://velayudhansyam.app.n8n.cloud/webhook/contract-sign", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contract_id: contractId,
-          status: "signed",
-          signed_at: new Date().toISOString()
-        })
-      });
+      await fetch(
+  "https://velayudhansyam.app.n8n.cloud/webhook/contract-sign",
+  {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      fileId,
+      token,
+      action: "signed"
+    })
+  }
+);
 
       document.getElementById("status").textContent = "✅ Contract signed successfully.";
     };
