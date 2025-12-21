@@ -1,1 +1,51 @@
+      document.body.innerHTML = "<h3>Invalid or missing link</h3>";
+      throw new Error("Missing parameters");
+    }
+
+    const viewUrl =
+      "https://velayudhansyam.app.n8n.cloud/webhook/contract-approval" +
+      "?action=view" +
+      "&fileId=" + encodeURIComponent(fileId) +
+      "&token=" + encodeURIComponent(token);
+
+    document.getElementById("pdfFrame").src = viewUrl;
+    document.getElementById("openPdf").href = viewUrl;
+
+    document.getElementById("approveBtn").addEventListener("click", async () => {
+      const btn = document.getElementById("approveBtn");
+      const status = document.getElementById("statusMsg");
+
+      btn.disabled = true;
+      status.innerText = "Submitting approval…";
+
+      try {
+        const res = await fetch(
+          "https://velayudhansyam.app.n8n.cloud/webhook/contract-approval",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              action: "approve",
+              fileId,
+              token,
+              userAgent: navigator.userAgent
+            })
+          }
+        );
+
+        if (!res.ok) throw new Error("Approval failed");
+
+        btn.innerText = "✅ Contract Approved";
+        status.innerText =
+          "Thank you. Your approval has been recorded. The contractor will be notified.";
+
+      } catch (err) {
+        btn.disabled = false;
+        status.innerText =
+          "❌ Approval failed. Please refresh and try again.";
+      }
+    });
+  </script>
+</body>
+</html>
 
