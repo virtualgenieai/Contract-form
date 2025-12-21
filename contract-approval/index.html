@@ -1,3 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Approve Contract</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f7f7f7;
+      padding: 20px;
+      margin: 0;
+    }
+    .container {
+      max-width: 900px;
+      margin: auto;
+      background: #fff;
+      padding: 16px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    iframe {
+      width: 100%;
+      height: 70vh;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+    }
+    .btn {
+      display: inline-block;
+      margin-top: 12px;
+      padding: 10px 16px;
+      background: #1E90FF;
+      color: #fff;
+      text-decoration: none;
+      border-radius: 6px;
+      font-weight: bold;
+    }
+    .approve-btn {
+      width: 100%;
+      margin-top: 16px;
+      padding: 14px;
+      background: #1E90FF;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .approve-btn:disabled {
+      background: #999;
+    }
+    #statusMsg {
+      margin-top: 12px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h2>Review & Approve Contract</h2>
+
+    <iframe id="pdfFrame"></iframe>
+
+    <a id="openPdf" class="btn" target="_blank">Open Contract Full Screen</a>
+
+    <button id="approveBtn" class="approve-btn">
+      ✅ Approve Contract
+    </button>
+
+    <p id="statusMsg"></p>
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const params = new URLSearchParams(window.location.search);
+      const fileId = params.get("fileId");
+      const token = params.get("token");
+
+      if (!fileId || !token) {
+        document.body.innerHTML = "<h3>Invalid or missing link</h3>";
+        return;
+      }
+
+      const viewUrl =
+        "https://velayudhansyam.app.n8n.cloud/webhook/contract-approval" +
+        "?action=view" +
+        "&fileId=" + encodeURIComponent(fileId) +
+        "&token=" + encodeURIComponent(token);
+
+      document.getElementById("pdfFrame").src = viewUrl;
+      document.getElementById("openPdf").href = viewUrl;
+
+      document.getElementById("approveBtn").onclick = async () => {
+        const btn = document.getElementById("approveBtn");
+        const status = document.getElementById("statusMsg");
+
+        btn.disabled = true;
+        status.innerText = "Submitting approval…";
+
+        try {
+          const res = await fetch(
+            "https://velayudhansyam.app.n8n.cloud/webhook/contract-approval",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
                 action: "approve",
                 fileId,
                 token,
@@ -9,8 +117,7 @@
           if (!res.ok) throw new Error();
 
           btn.innerText = "✅ Contract Approved";
-          status.innerText =
-            "Thank you. Your approval has been recorded.";
+          status.innerText = "Thank you. Your approval has been recorded.";
 
         } catch {
           btn.disabled = false;
