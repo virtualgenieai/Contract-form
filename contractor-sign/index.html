@@ -41,33 +41,38 @@
 <script>
   const params = new URLSearchParams(window.location.search);
   const fileId = params.get("fileId");
-  const token = params.get("token");
 
-  if (!fileId || !token) {
+  if (!fileId) {
     document.body.innerHTML = "<h2>❌ Invalid or expired link</h2>";
-    throw new Error("Missing params");
+    throw new Error("Missing fileId");
   }
 
   document.getElementById("signBtn").onclick = async () => {
     document.getElementById("status").textContent = "Signing…";
 
-    const res = await fetch(
-      "https://velayudhansyam.app.n8n.cloud/webhook/contract-sign",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          fileId,
-          token,
-          status: "signed"
-        })
-      }
-    );
+    try {
+      const res = await fetch(
+        "https://velayudhansyam.app.n8n.cloud/webhook/contract-sign",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            fileId,
+            status: "signed"
+          })
+        }
+      );
 
-    if (res.ok) {
-      document.getElementById("status").textContent = "✅ Contract signed successfully.";
-    } else {
-      document.getElementById("status").textContent = "❌ Signing failed.";
+      if (res.ok) {
+        document.getElementById("status").textContent =
+          "✅ Contract signed successfully.";
+      } else {
+        document.getElementById("status").textContent =
+          "❌ Signing failed. Please try again.";
+      }
+    } catch (err) {
+      document.getElementById("status").textContent =
+        "❌ Network error. Please try again.";
     }
   };
 </script>
