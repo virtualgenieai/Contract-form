@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Renovation Agreement</title>
+  <style>
+    body {
+      font-family: "Times New Roman", serif;
+      color: #111;
+      line-height: 1.6;
+      padding: 40px;
+    }
+
+    h1, h2 {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    h1 {
+      font-size: 22px;
+      text-transform: uppercase;
+    }
+
+    h2 {
+      font-size: 18px;
+      margin-top: 30px;
+    }
+
+    p {
+      margin: 8px 0;
+    }
+
+    ul {
+      margin-left: 20px;
+    }
+
+    .section {
+      margin-top: 25px;
+    }
+
+    .signature {
+      margin-top: 50px;
+    }
+
+    .signature-line {
+      margin-top: 40px;
+    }
+
+    .meta {
+      font-size: 12px;
+      color: #444;
+      margin-top: 30px;
+    }
+
+    .highlight {
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Renovation Agreement</h1>
+
+<p>
+  This Agreement is made on <span class="highlight">{{agreement_date}}</span> between:
+</p>
+
+<p>
+  <strong>Client:</strong> REI Task (“Client”)<br>
+  <strong>Contractor:</strong> {{contractor_name}} (“Contractor”)<br>
+  <strong>Property Address:</strong> {{property_address}}
+</p>
+
+<div class="section">
+  <h2>Scope of Work</h2>
+  <ul>
+    {{#each scope_items}}
+      <li>{{this}}</li>
+    {{/each}}
+  </ul>
+</div>
+
+<div class="section">
+  <h2>Timeline</h2>
+  <ul>
+    <li>Work must begin on <strong>{{timeline_start}}</strong></li>
+    <li>Work must be completed no later than <strong>{{timeline_end}}</strong></li>
+    <li>
+      Any delays must be communicated immediately to the Client with a proposed
+      revised completion schedule.
+    </li>
+  </ul>
+</div>
+
+<div class="section">
+  <h2>Payment Schedule</h2>
+  <p>{{payment_terms}}</p>
+</div>
+
+<div class="section">
+  <h2>Quality Standards</h2>
+  <p>{{quality_standards}}</p>
+</div>
+
+<div class="section">
+  <h2>Payment Release Terms</h2>
+  <ul>
+    <li>Contractor must submit clear photo/video proof of completed work.</li>
+    <li>REI Task will review submissions within 24 hours.</li>
+    <li>
+      Payments are released only after verification that work matches the agreed scope.
+    </li>
+  </ul>
+</div>
+
+<div class="section">
+  <h2>Reassignment Clause</h2>
+  <p>
+    If the Contractor cannot complete the work by the agreed deadline, the Client
+    reserves the right to reassign the project to another qualified contractor.
+  </p>
+  <ul>
+    <li>Completed milestones will be paid in full.</li>
+    <li>Incomplete milestones will be paid proportionally or withheld.</li>
+  </ul>
+</div>
+
+<div class="section">
+  <h2>Client Updates & Progress Reporting</h2>
+  <ul>
+    <li>Contractor must provide end-of-day photo/video updates.</li>
+    <li>Updates are required regardless of milestone completion.</li>
+    <li>Failure to provide updates may affect payment and future work.</li>
+  </ul>
+</div>
+
+<div class="section">
+  <h2>General Terms</h2>
+  <ul>
+    <li>Any work outside this scope requires written approval.</li>
+    <li>The Client may inspect work at any time.</li>
+    <li>
+      By signing, both parties confirm they have read and understood this Agreement.
+    </li>
+  </ul>
+</div>
+
+<div class="signature">
+  <h2>Signatures</h2>
+
+  <div class="signature-line">
+    <p>
+      <strong>Client:</strong> REI Task<br>
+      Signature: ___________________________<br>
+      Date: ___________________________
+    </p>
+  </div>
+
+  <div class="signature-line">
+    <p>
+      <strong>Contractor:</strong> {{contractor_name}}<br>
+      Signature: ___________________________<br>
+      Date: ___________________________
+    </p>
+  </div>
+</div>
+
+<div class="meta">
+  <p>
+    Generated via Virtual Genie • Agreement ID: {{contract_id}}<br>
+    Contractor Email: {{contractor_email}}<br>
+    Reviewer Email: {{reviewer_email}}
+  </p>
+</div>
+
+</body>
+</html>
