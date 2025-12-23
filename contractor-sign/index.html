@@ -1,81 +1,125 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Sign Contract</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Review & Sign Contract</title>
+
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #f7f7f7;
-      padding: 40px;
       text-align: center;
+      padding: 40px;
     }
-    .card {
-      background: white;
-      padding: 30px;
-      max-width: 600px;
-      margin: auto;
-      border-radius: 8px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    }
-    button {
-      padding: 14px 22px;
+
+    a, button {
+      display: inline-block;
+      margin: 15px;
+      padding: 14px 24px;
       font-size: 16px;
-      background: #2563eb;
+      text-decoration: none;
+      cursor: pointer;
+      border-radius: 6px;
+    }
+
+    a {
+      background: #007bff;
+      color: #fff;
+    }
+
+    button {
+      background: #28a745;
       color: white;
       border: none;
-      border-radius: 6px;
-      cursor: pointer;
+    }
+
+    button:disabled {
+      background: #aaa;
+      cursor: not-allowed;
+    }
+
+    .status {
+      margin-top: 25px;
+      font-weight: bold;
+    }
+
+    .error {
+      color: red;
+    }
+
+    .success {
+      color: green;
     }
   </style>
 </head>
 <body>
-  <div class="card">
-    <h1>✍️ Contractor Signature</h1>
-    <p>Please confirm you are signing this contract.</p>
 
-    <button id="signBtn">Sign Contract</button>
-    <p id="status"></p>
-  </div>
+<h2>Review & Sign Contract</h2>
+<p>You must review the approved contract before signing.</p>
+
+<a id="viewContract" target="_blank">📄 View Approved Contract</a>
+<br />
+<button id="signBtn" disabled>✍️ Sign Contract</button>
+
+<p id="status" class="status"></p>
 
 <script>
   const params = new URLSearchParams(window.location.search);
   const fileId = params.get("fileId");
+  const token = params.get("token");
 
-  if (!fileId) {
-    document.body.innerHTML = "<h2>❌ Invalid or expired link</h2>";
-    throw new Error("Missing fileId");
-  }
+  const viewBtn = document.getElementById("viewContract");
+  const signBtn = document.getElementById("signBtn");
+  const statusEl = document.getElementById("status");
 
-  document.getElementById("signBtn").onclick = async () => {
-    document.getElementById("status").textContent = "Signing…";
+  if (!fileId || !token) {
+    statusEl.textContent = "❌ Invalid or expired signing link";
+    statusEl.className = "status error";
+  } else {
 
-    try {
-      const res = await fetch(
-        "https://velayudhansyam.app.n8n.cloud/webhook/contract-sign",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            fileId,
-            status: "signed"
-          })
-        }
-      );
+    // Google Drive view (approved contract)
+    viewBtn.href = `https://drive.google.com/file/d/${fileId}/view`;
 
-      if (res.ok) {
-        document.getElementById("status").textContent =
-          "✅ Contract signed successfully.";
-      } else {
-        document.getElementById("status").textContent =
-          "❌ Signing failed. Please try again.";
+    // Require view before signing
+    viewBtn.addEventListener("click", () => {
+      signBtn.disabled = false;
+    });
+
+    signBtn.onclick = async () => {
+      signBtn.disabled = true;
+      signBtn.textContent = "Signing…";
+
+      try {
+        const res = await fetch(
+          "https://velayudhansyam.app.n8n.cloud/webhook/contract-sign",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              fileId,
+              token,
+              signerRole: "contractor",
+              signedAt: new Date().toISOString(),
+              userAgent: navigator.userAgent
+            })
+          }
+        );
+
+        if (!res.ok) throw new Error();
+
+        statusEl.textContent = "✅ Contract signed successfully";
+        statusEl.className = "status success";
+        signBtn.style.display = "none";
+
+      } catch {
+        statusEl.textContent = "❌ Signing failed. Try again.";
+        statusEl.className = "status error";
+        signBtn.disabled = false;
+        signBtn.textContent = "✍️ Sign Contract";
       }
-    } catch (err) {
-      document.getElementById("status").textContent =
-        "❌ Network error. Please try again.";
-    }
-  };
+    };
+  }
 </script>
+
 </body>
 </html>
-
