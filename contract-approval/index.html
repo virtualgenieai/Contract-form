@@ -4,19 +4,26 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Approve Contract</title>
+
   <style>
     body {
       font-family: Arial, sans-serif;
       text-align: center;
       padding: 40px;
     }
+    input {
+      padding: 10px;
+      width: 300px;
+      font-size: 16px;
+      margin-top: 10px;
+    }
     button, a {
       display: inline-block;
       margin: 15px;
       padding: 12px 20px;
       font-size: 16px;
-      text-decoration: none;
       cursor: pointer;
+      text-decoration: none;
     }
     button {
       background: #28a745;
@@ -29,22 +36,21 @@
       color: white;
       border-radius: 6px;
     }
-    .error {
-      color: red;
-      margin-top: 20px;
-    }
-    .success {
-      color: green;
-      margin-top: 20px;
-    }
+    .error { color: red; }
+    .success { color: green; }
   </style>
 </head>
+
 <body>
 
 <h2>Review & Approve Contract</h2>
 
 <div id="actions" style="display:none;">
   <a id="viewDraft" target="_blank">📄 View Draft Contract</a>
+
+  <p><strong>Type your full legal name to sign:</strong></p>
+  <input id="signerName" placeholder="Full legal name" />
+
   <br />
   <button id="approveBtn">✍️ Approve & Sign Contract</button>
 </div>
@@ -60,18 +66,23 @@
   const actionsEl = document.getElementById("actions");
   const approveBtn = document.getElementById("approveBtn");
   const viewDraft = document.getElementById("viewDraft");
+  const signerInput = document.getElementById("signerName");
 
   if (!fileId || !token) {
     statusEl.textContent = "❌ Invalid or expired link";
     statusEl.className = "error";
   } else {
-    // Show buttons
     actionsEl.style.display = "block";
-
-    // Google Drive preview link
     viewDraft.href = `https://drive.google.com/file/d/${fileId}/view`;
 
     approveBtn.onclick = async () => {
+      const signerName = signerInput.value.trim();
+
+      if (!signerName) {
+        alert("Please enter your full legal name.");
+        return;
+      }
+
       approveBtn.disabled = true;
       approveBtn.textContent = "Processing…";
 
@@ -81,15 +92,20 @@
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ fileId, token })
+            body: JSON.stringify({
+              fileId,
+              token,
+              signerName
+            })
           }
         );
 
         if (!res.ok) throw new Error();
 
-        statusEl.textContent = "✅ Contract approved successfully";
+        statusEl.textContent = "✅ Contract approved & legally signed";
         statusEl.className = "success";
         approveBtn.style.display = "none";
+        signerInput.disabled = true;
 
       } catch {
         statusEl.textContent = "❌ Approval failed";
@@ -103,4 +119,3 @@
 
 </body>
 </html>
-
