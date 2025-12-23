@@ -2,171 +2,115 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Review & Sign Contract</title>
-
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     body {
-      font-family: Arial, sans-serif;
-      background: #f7f7f7;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #f5f7fb;
+      display: flex;
+      justify-content: center;
       padding: 40px;
+    }
+    .card {
+      background: #fff;
+      padding: 30px;
+      max-width: 420px;
+      width: 100%;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
       text-align: center;
     }
-
-    .card {
-      background: white;
-      max-width: 680px;
-      margin: auto;
-      padding: 32px;
-      border-radius: 12px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-    }
-
-    a, button {
-      display: inline-block;
-      margin: 16px 0;
-      padding: 14px 26px;
-      font-size: 16px;
-      text-decoration: none;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-
-    a {
-      background: #2563eb;
-      color: #fff;
-    }
-
     button {
-      background: #16a34a;
-      color: #fff;
+      background: #2563eb;
+      color: white;
       border: none;
+      padding: 14px 20px;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      width: 100%;
     }
-
     button:disabled {
-      background: #9ca3af;
+      opacity: 0.6;
       cursor: not-allowed;
     }
-
     .status {
-      margin-top: 20px;
-      font-weight: bold;
+      margin-top: 16px;
+      font-weight: 600;
     }
-
-    .error { color: #dc2626; }
     .success { color: #16a34a; }
-
+    .error { color: #dc2626; }
     .legal {
-      margin-top: 32px;
-      font-size: 12px;
-      color: #444;
-      text-align: left;
-      border-top: 1px solid #ddd;
-      padding-top: 16px;
-      line-height: 1.55;
+      margin-top: 20px;
+      font-size: 13px;
+      color: #555;
+      display: none;
     }
   </style>
 </head>
+
 <body>
+  <div class="card">
+    <h2>Review & Sign Contract</h2>
 
-<div class="card">
-  <h2>Review & Sign Contract</h2>
+    <p>
+      By clicking <strong>Sign Contract</strong>, you agree this is a legally
+      binding electronic signature.
+    </p>
 
-  <p>
-    You must review the entire contract before signing.
-    By clicking <strong>Sign Contract</strong>, you agree that this constitutes
-    a legally binding electronic signature.
-  </p>
+    <button id="signBtn">✍️ Sign Contract</button>
 
-  <a id="viewContract" target="_blank">📄 View Approved Contract</a>
+    <div id="status" class="status"></div>
 
-  <br />
-
-  <button id="signBtn" disabled>✍️ Sign Contract</button>
-
-  <p id="status" class="status"></p>
-
-  <!-- LEGAL STAMP (VISIBLE AFTER SIGNING) -->
-  <div class="legal" id="legalStamp" style="display:none;">
-    <strong>LEGALLY BINDING ELECTRONIC SIGNATURE</strong><br><br>
-
-    This agreement was executed electronically in accordance with the
-    U.S. Electronic Signatures in Global and National Commerce Act (ESIGN)
-    and the Uniform Electronic Transactions Act (UETA).<br><br>
-
-    <strong>Signer Role:</strong> Contractor<br>
-    <strong>Date & Time (UTC):</strong> <span id="signedAt"></span><br>
-    <strong>Device Fingerprint (hashed):</strong> <span id="deviceHash"></span><br>
-
-    <br>
-    By applying this electronic signature, the signer confirms:
-    <ul>
-      <li>They reviewed the full contract prior to signing</li>
-      <li>They intended to sign and be legally bound</li>
-      <li>No changes were made after signing</li>
-    </ul>
-
-    <em>
-      Any alteration to this document after execution will invalidate this signature.
-      A complete audit log is retained.
-    </em>
+    <div id="legalStamp" class="legal">
+      <div><strong>Signed at:</strong> <span id="signedAt"></span></div>
+      <div><strong>Device hash:</strong> <span id="deviceHash"></span></div>
+    </div>
   </div>
-</div>
 
-<script>
-  const params = new URLSearchParams(window.location.search);
-  const fileId = params.get("fileId");
-  const token = params.get("token");
+  <script>
+    // ✅ READ TOKEN + FILEID FROM URL
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get("token");
+    const fileId = params.get("fileId");
 
-  const viewBtn = document.getElementById("viewContract");
-  const signBtn = document.getElementById("signBtn");
-  const statusEl = document.getElementById("status");
-  const legalStamp = document.getElementById("legalStamp");
+    const statusEl = document.getElementById("status");
+    const signBtn = document.getElementById("signBtn");
+    const legalStamp = document.getElementById("legalStamp");
 
-  if (!fileId || !token) {
-    statusEl.textContent = "❌ Invalid or expired signing link";
-    statusEl.className = "status error";
-    signBtn.style.display = "none";
-  } else {
+    if (!token || !fileId) {
+      statusEl.textContent = "❌ Invalid or expired signing link";
+      statusEl.className = "status error";
+      signBtn.disabled = true;
+      throw new Error("Missing token or fileId");
+    }
 
-    // Google Drive preview
-    viewBtn.href = `https://drive.google.com/file/d/${fileId}/view`;
-
-    let hasViewed = false;
-
-    viewBtn.addEventListener("click", () => {
-      hasViewed = true;
-      signBtn.disabled = false;
-    });
-
-    // Lightweight device fingerprint (server will hash again)
-    const deviceFingerprint = btoa(
-      navigator.userAgent +
-      "|" + screen.width +
-      "|" + screen.height +
-      "|" + Intl.DateTimeFormat().resolvedOptions().timeZone
-    );
+    // Simple device fingerprint (good enough for audit trail)
+    async function getDeviceFingerprint() {
+      const msg = navigator.userAgent + screen.width + screen.height + navigator.language;
+      const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(msg));
+      return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, "0")).join("");
+    }
 
     signBtn.onclick = async () => {
-      if (!hasViewed) return;
-
-      signBtn.disabled = true;
-      signBtn.textContent = "Signing…";
-
-      const signedAt = new Date().toISOString();
-
       try {
+        signBtn.disabled = true;
+        signBtn.textContent = "Signing…";
+
+        const signedAt = new Date().toISOString();
+        const deviceFingerprint = await getDeviceFingerprint();
+
         const res = await fetch(
-          "https://velayudhansyam.app.n8n.cloud/webhook/contract-sign",
+          "https://velayudhansyam.app.n8n.cloud/webhook/contract-approval",
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              fileId: fileId,
-              token: token,
-              signerRole: "contractor",
-              signedAt: signedAt,
-              deviceFingerprint: deviceFingerprint,
+              fileId,
+              token,
+              signedAt,
+              deviceFingerprint,
               intent: "I intend to sign and be legally bound"
             })
           }
@@ -189,8 +133,6 @@
         signBtn.textContent = "✍️ Sign Contract";
       }
     };
-  }
-</script>
-
+  </script>
 </body>
 </html>
