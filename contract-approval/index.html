@@ -1,25 +1,47 @@
-<script>
-const params = new URLSearchParams(window.location.search);
-const fileId = params.get("fileId");
-const token = params.get("token");
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Approve Contract</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 40px;
+    }
+  </style>
+</head>
+<body>
 
-if (!fileId || !token) {
-  document.body.innerHTML = "<h2>❌ Invalid or expired link</h2>";
-} else {
-  fetch("https://velayudhansyam.app.n8n.cloud/webhook/contract-approval", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ fileId, token })
-  })
-  .then(res => {
-    if (!res.ok) throw new Error("Approval failed");
-    return res.text();
-  })
-  .then(() => {
-    document.body.innerHTML = "<h2>✅ Contract approved successfully</h2>";
-  })
-  .catch(() => {
-    document.body.innerHTML = "<h2>❌ Approval failed</h2>";
-  });
-}
+<h2 id="status">Processing approval…</h2>
+
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const fileId = params.get("fileId");
+  const token = params.get("token");
+  const statusEl = document.getElementById("status");
+
+  if (!fileId || !token) {
+    statusEl.innerHTML = "❌ Invalid or expired link";
+  } else {
+    fetch("https://velayudhansyam.app.n8n.cloud/webhook/contract-approval", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ fileId, token })
+    })
+    .then(res => {
+      if (!res.ok) throw new Error("Approval failed");
+      return res.text();
+    })
+    .then(() => {
+      statusEl.innerHTML = "✅ Contract approved successfully";
+    })
+    .catch(() => {
+      statusEl.innerHTML = "❌ Approval failed";
+    });
+  }
 </script>
+
+</body>
+</html>
