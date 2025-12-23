@@ -10,19 +10,46 @@
       text-align: center;
       padding: 40px;
     }
-    button {
-      padding: 12px 24px;
+    button, a {
+      display: inline-block;
+      margin: 15px;
+      padding: 12px 20px;
       font-size: 16px;
+      text-decoration: none;
       cursor: pointer;
+    }
+    button {
+      background: #28a745;
+      color: white;
+      border: none;
+      border-radius: 6px;
+    }
+    a {
+      background: #007bff;
+      color: white;
+      border-radius: 6px;
+    }
+    .error {
+      color: red;
+      margin-top: 20px;
+    }
+    .success {
+      color: green;
       margin-top: 20px;
     }
   </style>
 </head>
 <body>
 
-<h2 id="status">Review contract before approving</h2>
+<h2>Review & Approve Contract</h2>
 
-<button id="approveBtn">✍️ Approve & Sign</button>
+<div id="actions" style="display:none;">
+  <a id="viewDraft" target="_blank">📄 View Draft Contract</a>
+  <br />
+  <button id="approveBtn">✍️ Approve & Sign Contract</button>
+</div>
+
+<p id="status"></p>
 
 <script>
   const params = new URLSearchParams(window.location.search);
@@ -30,36 +57,48 @@
   const token = params.get("token");
 
   const statusEl = document.getElementById("status");
+  const actionsEl = document.getElementById("actions");
   const approveBtn = document.getElementById("approveBtn");
+  const viewDraft = document.getElementById("viewDraft");
 
   if (!fileId || !token) {
-    statusEl.innerHTML = "❌ Invalid or expired link";
-    approveBtn.style.display = "none";
+    statusEl.textContent = "❌ Invalid or expired link";
+    statusEl.className = "error";
+  } else {
+    // Show buttons
+    actionsEl.style.display = "block";
+
+    // Google Drive preview link
+    viewDraft.href = `https://drive.google.com/file/d/${fileId}/view`;
+
+    approveBtn.onclick = async () => {
+      approveBtn.disabled = true;
+      approveBtn.textContent = "Processing…";
+
+      try {
+        const res = await fetch(
+          "https://velayudhansyam.app.n8n.cloud/webhook/contract-approval",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ fileId, token })
+          }
+        );
+
+        if (!res.ok) throw new Error();
+
+        statusEl.textContent = "✅ Contract approved successfully";
+        statusEl.className = "success";
+        approveBtn.style.display = "none";
+
+      } catch {
+        statusEl.textContent = "❌ Approval failed";
+        statusEl.className = "error";
+        approveBtn.disabled = false;
+        approveBtn.textContent = "✍️ Approve & Sign Contract";
+      }
+    };
   }
-
-  approveBtn.onclick = async () => {
-    approveBtn.disabled = true;
-    statusEl.innerHTML = "Processing approval…";
-
-    try {
-      const res = await fetch(
-        "https://velayudhansyam.app.n8n.cloud/webhook/contract-approval",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ fileId, token })
-        }
-      );
-
-      if (!res.ok) throw new Error();
-
-      statusEl.innerHTML = "✅ Contract approved successfully";
-      approveBtn.style.display = "none";
-    } catch {
-      statusEl.innerHTML = "❌ Approval failed";
-      approveBtn.disabled = false;
-    }
-  };
 </script>
 
 </body>
