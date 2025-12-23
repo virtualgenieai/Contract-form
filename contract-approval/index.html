@@ -10,39 +10,57 @@
       text-align: center;
       padding: 40px;
     }
+    button {
+      padding: 12px 24px;
+      font-size: 16px;
+      cursor: pointer;
+      margin-top: 20px;
+    }
   </style>
 </head>
 <body>
 
-<h2 id="status">Processing approval…</h2>
+<h2 id="status">Review contract before approving</h2>
+
+<button id="approveBtn">✍️ Approve & Sign</button>
 
 <script>
   const params = new URLSearchParams(window.location.search);
   const fileId = params.get("fileId");
   const token = params.get("token");
+
   const statusEl = document.getElementById("status");
+  const approveBtn = document.getElementById("approveBtn");
 
   if (!fileId || !token) {
     statusEl.innerHTML = "❌ Invalid or expired link";
-  } else {
-    fetch("https://velayudhansyam.app.n8n.cloud/webhook/contract-approval", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ fileId, token })
-    })
-    .then(res => {
-      if (!res.ok) throw new Error("Approval failed");
-      return res.text();
-    })
-    .then(() => {
-      statusEl.innerHTML = "✅ Contract approved successfully";
-    })
-    .catch(() => {
-      statusEl.innerHTML = "❌ Approval failed";
-    });
+    approveBtn.style.display = "none";
   }
+
+  approveBtn.onclick = async () => {
+    approveBtn.disabled = true;
+    statusEl.innerHTML = "Processing approval…";
+
+    try {
+      const res = await fetch(
+        "https://velayudhansyam.app.n8n.cloud/webhook/contract-approval",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ fileId, token })
+        }
+      );
+
+      if (!res.ok) throw new Error();
+
+      statusEl.innerHTML = "✅ Contract approved successfully";
+      approveBtn.style.display = "none";
+    } catch {
+      statusEl.innerHTML = "❌ Approval failed";
+      approveBtn.disabled = false;
+    }
+  };
 </script>
 
 </body>
 </html>
-
