@@ -1,21 +1,31 @@
 <script>
-const params = new URLSearchParams(window.location.search);
-const fileId = params.get("fileId");
-const token = params.get("token");
+  const params = new URLSearchParams(window.location.search);
+  const fileId = params.get("fileId");
+  const token = params.get("token");
 
-if (!fileId || !token) {
-  document.body.innerHTML = "<h2>Invalid or expired link</h2>";
-} else {
-  fetch(
-    "https://velayudhansyam.app.n8n.cloud/webhook/approve-contract" +
-    `?fileId=${fileId}&token=${token}`
-  )
-  .then(res => res.text())
-  .then(() => {
-    document.body.innerHTML = "<h2>✅ Contract approved successfully</h2>";
+  if (!fileId || !token) {
+    document.body.innerHTML = "<h2>❌ Invalid or expired link</h2>";
+    throw new Error("Missing parameters");
+  }
+
+  fetch("https://velayudhansyam.app.n8n.cloud/webhook/contract-approval", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      fileId,
+      token
+    })
   })
-  .catch(() => {
-    document.body.innerHTML = "<h2>❌ Approval failed</h2>";
-  });
-}
+    .then(res => {
+      if (!res.ok) throw new Error("Approval failed");
+      return res.text();
+    })
+    .then(() => {
+      document.body.innerHTML = "<h2>✅ Contract approved successfully</h2>";
+    })
+    .catch(() => {
+      document.body.innerHTML = "<h2>❌ Invalid or expired link</h2>";
+    });
 </script>
