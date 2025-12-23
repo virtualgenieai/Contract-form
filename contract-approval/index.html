@@ -1,150 +1,21 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>Approve Contract</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+<script>
+const params = new URLSearchParams(window.location.search);
+const fileId = params.get("fileId");
+const token = params.get("token");
 
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f7f7f7;
-      padding: 20px;
-      margin: 0;
-    }
-
-    .container {
-      max-width: 900px;
-      margin: auto;
-      background: #fff;
-      padding: 16px;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-
-    .btn {
-      display: inline-block;
-      margin-top: 12px;
-      padding: 12px 18px;
-      background: #1E90FF;
-      color: #fff;
-      text-decoration: none;
-      border-radius: 6px;
-      font-weight: bold;
-    }
-
-    .approve-btn {
-      width: 100%;
-      margin-top: 16px;
-      padding: 14px;
-      background: #28a745;
-      color: #fff;
-      border: none;
-      border-radius: 6px;
-      font-size: 16px;
-      font-weight: bold;
-      cursor: pointer;
-    }
-
-    .approve-btn:disabled {
-      background: #999;
-      cursor: not-allowed;
-    }
-
-    #statusMsg {
-      margin-top: 12px;
-      font-weight: bold;
-    }
-
-    .legal-box {
-      margin-top: 16px;
-      padding: 12px;
-      background: #f0f4ff;
-      border-left: 4px solid #1E90FF;
-      font-size: 14px;
-    }
-  </style>
-</head>
-
-<body>
-  <div class="container">
-    <h2>Review & Approve Contract</h2>
-
-    <!-- VIEW CONTRACT (Google Drive) -->
-    <a id="openPdf" class="btn" target="_blank">
-      📄 View Contract
-    </a>
-
-    <!-- LEGAL ACCEPTANCE -->
-    <div class="legal-box">
-      By clicking <strong>Approve Contract</strong>, you confirm that you have
-      read, understood, and agree to the terms of this contract.
-      This action is legally binding.
-    </div>
-
-    <!-- APPROVE -->
-    <button id="approveBtn" class="approve-btn">
-      ✅ Approve Contract
-    </button>
-
-    <p id="statusMsg"></p>
-  </div>
-
-  <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      const params = new URLSearchParams(window.location.search);
-      const fileId = params.get("fileId");
-      const token = params.get("token");
-
-      if (!fileId || !token) {
-        document.body.innerHTML = "<h3>Invalid or expired link</h3>";
-        return;
-      }
-
-      // Google Drive viewer (NO webhook)
-      const driveViewUrl =
-        "https://drive.google.com/file/d/" +
-        encodeURIComponent(fileId) +
-        "/view";
-
-      document.getElementById("openPdf").href = driveViewUrl;
-
-      // Approve (POST only)
-      document.getElementById("approveBtn").onclick = async () => {
-        const btn = document.getElementById("approveBtn");
-        const status = document.getElementById("statusMsg");
-
-        btn.disabled = true;
-        status.innerText = "Submitting approval…";
-
-        try {
-          const res = await fetch(
-            "https://velayudhansyam.app.n8n.cloud/webhook/contract-approval",
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                action: "approve",
-                fileId,
-                token,
-                userAgent: navigator.userAgent
-              })
-            }
-          );
-
-          if (!res.ok) throw new Error();
-
-          btn.innerText = "✅ Contract Approved";
-          status.innerText =
-            "Thank you. Your approval has been recorded.";
-
-        } catch {
-          btn.disabled = false;
-          status.innerText =
-            "❌ Approval failed. Please try again.";
-        }
-      };
-    });
-  </script>
-</body>
-</html>
+if (!fileId || !token) {
+  document.body.innerHTML = "<h2>Invalid or expired link</h2>";
+} else {
+  fetch(
+    "https://velayudhansyam.app.n8n.cloud/webhook/approve-contract" +
+    `?fileId=${fileId}&token=${token}`
+  )
+  .then(res => res.text())
+  .then(() => {
+    document.body.innerHTML = "<h2>✅ Contract approved successfully</h2>";
+  })
+  .catch(() => {
+    document.body.innerHTML = "<h2>❌ Approval failed</h2>";
+  });
+}
+</script>
