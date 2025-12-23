@@ -1,67 +1,25 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Approve Contract</title>
+<script>
+const params = new URLSearchParams(window.location.search);
+const fileId = params.get("fileId");
+const token = params.get("token");
 
-  <style>
-    body {
-      font-family: system-ui, Arial, sans-serif;
-      background: #f8fafc;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      margin: 0;
-    }
-    .box {
-      text-align: center;
-      padding: 32px;
-    }
-  </style>
-</head>
-
-<body>
-  <div class="box" id="app">
-    <h2>⏳ Processing approval…</h2>
-  </div>
-
-  <script>
-    try {
-      const params = new URLSearchParams(window.location.search);
-      const fileId = params.get("fileId");
-      const token = params.get("token");
-
-      const app = document.getElementById("app");
-
-      if (!fileId || !token) {
-        app.innerHTML = "<h2>❌ Invalid or expired link</h2>";
-        throw new Error("Missing params");
-      }
-
-      fetch("https://velayudhansyam.app.n8n.cloud/webhook/contract-approval", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ fileId, token })
-      })
-        .then(res => {
-          if (!res.ok) throw new Error("Approval failed");
-          return res.text();
-        })
-        .then(() => {
-          app.innerHTML = "<h2>✅ Contract approved successfully</h2>";
-        })
-        .catch(err => {
-          console.error(err);
-          app.innerHTML = "<h2>❌ Invalid or expired link</h2>";
-        });
-
-    } catch (e) {
-      document.body.innerHTML = "<h2>❌ Unexpected error</h2>";
-    }
-  </script>
-</body>
-</html>
+if (!fileId || !token) {
+  document.body.innerHTML = "<h2>❌ Invalid or expired link</h2>";
+} else {
+  fetch("https://velayudhansyam.app.n8n.cloud/webhook/contract-approval", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ fileId, token })
+  })
+  .then(res => {
+    if (!res.ok) throw new Error("Approval failed");
+    return res.text();
+  })
+  .then(() => {
+    document.body.innerHTML = "<h2>✅ Contract approved successfully</h2>";
+  })
+  .catch(() => {
+    document.body.innerHTML = "<h2>❌ Approval failed</h2>";
+  });
+}
+</script>
