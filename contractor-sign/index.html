@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <title>Review & Sign Contract</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+
   <style>
     body {
       font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
@@ -12,43 +13,73 @@
       justify-content: center;
       padding: 40px;
     }
+
     .card {
-      background: #fff;
-      padding: 30px;
+      background: #ffffff;
+      padding: 32px;
       max-width: 420px;
       width: 100%;
-      border-radius: 12px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+      border-radius: 14px;
+      box-shadow: 0 12px 35px rgba(0,0,0,0.08);
       text-align: center;
     }
-    button, a.button {
+
+    h2 {
+      margin-bottom: 12px;
+    }
+
+    p {
+      font-size: 15px;
+      color: #444;
+    }
+
+    button,
+    a.button {
       background: #2563eb;
       color: white;
       border: none;
       padding: 14px 20px;
-      border-radius: 8px;
+      border-radius: 10px;
       font-size: 16px;
       cursor: pointer;
       width: 100%;
       display: inline-block;
       text-decoration: none;
-      margin-top: 12px;
+      margin-top: 14px;
     }
+
+    a.button.secondary {
+      background: #0f172a;
+    }
+
     button:disabled {
       opacity: 0.6;
       cursor: not-allowed;
     }
+
     .status {
       margin-top: 16px;
       font-weight: 600;
     }
-    .success { color: #16a34a; }
-    .error { color: #dc2626; }
+
+    .success {
+      color: #16a34a;
+    }
+
+    .error {
+      color: #dc2626;
+    }
+
     .legal {
       margin-top: 20px;
       font-size: 13px;
       color: #555;
       display: none;
+      text-align: left;
+    }
+
+    .legal div {
+      margin-top: 6px;
     }
   </style>
 </head>
@@ -58,14 +89,22 @@
     <h2>Review & Sign Contract</h2>
 
     <p>
+      Please review the contract before signing.  
       By clicking <strong>Sign Contract</strong>, you agree this is a legally
       binding electronic signature.
     </p>
 
+    <!-- VIEW CONTRACT (AVAILABLE IMMEDIATELY) -->
+    <a id="viewBtn" class="button secondary" target="_blank">
+      📄 View Contract
+    </a>
+
+    <!-- SIGN BUTTON -->
     <button id="signBtn">✍️ Sign Contract</button>
 
     <div id="status" class="status"></div>
 
+    <!-- LEGAL STAMP -->
     <div id="legalStamp" class="legal">
       <div><strong>Signed at:</strong> <span id="signedAt"></span></div>
       <div><strong>Device hash:</strong> <span id="deviceHash"></span></div>
@@ -73,7 +112,9 @@
   </div>
 
   <script>
-    // ✅ READ TOKEN + FILEID FROM URL
+    // ===============================
+    // READ TOKEN + FILEID FROM URL
+    // ===============================
     const params = new URLSearchParams(window.location.search);
     const token = params.get("token");
     const fileId = params.get("fileId");
@@ -81,15 +122,24 @@
     const statusEl = document.getElementById("status");
     const signBtn = document.getElementById("signBtn");
     const legalStamp = document.getElementById("legalStamp");
+    const viewBtn = document.getElementById("viewBtn");
 
     if (!token || !fileId) {
       statusEl.textContent = "❌ Invalid or expired signing link";
       statusEl.className = "status error";
       signBtn.disabled = true;
+      viewBtn.style.display = "none";
       throw new Error("Missing token or fileId");
     }
 
-    // Device fingerprint
+    // ===============================
+    // GOOGLE DRIVE PREVIEW LINK
+    // ===============================
+    viewBtn.href = `https://drive.google.com/file/d/${fileId}/preview`;
+
+    // ===============================
+    // DEVICE FINGERPRINT (AUDIT)
+    // ===============================
     async function getDeviceFingerprint() {
       const msg =
         navigator.userAgent +
@@ -107,6 +157,9 @@
         .join("");
     }
 
+    // ===============================
+    // SIGN CONTRACT
+    // ===============================
     signBtn.onclick = async () => {
       try {
         signBtn.disabled = true;
@@ -130,27 +183,22 @@
           }
         );
 
-        if (!res.ok) {
-          throw new Error("Webhook failed");
-        }
+        if (!res.ok) throw new Error("Webhook failed");
 
-        // ✅ SUCCESS UI
+        // ===============================
+        // SUCCESS UI
+        // ===============================
         statusEl.textContent = "✅ Contract signed successfully";
         statusEl.className = "status success";
+
         signBtn.style.display = "none";
 
         document.getElementById("signedAt").textContent = signedAt;
         document.getElementById("deviceHash").textContent = deviceFingerprint;
         legalStamp.style.display = "block";
 
-        // ✅ VIEW CONTRACT BUTTON
-        const viewBtn = document.createElement("a");
-        viewBtn.href = `https://drive.google.com/file/d/${fileId}/view`;
-        viewBtn.target = "_blank";
-        viewBtn.className = "button";
+        // Update view label post-sign
         viewBtn.textContent = "📄 View Signed Contract";
-
-        document.querySelector(".card").appendChild(viewBtn);
 
       } catch (err) {
         console.error(err);
