@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -13,6 +14,7 @@
       justify-content: center;
       padding: 40px;
     }
+
     .card {
       background: #ffffff;
       padding: 32px;
@@ -22,10 +24,11 @@
       box-shadow: 0 12px 35px rgba(0,0,0,0.08);
       text-align: center;
     }
+
     h2 { margin-bottom: 12px; }
     p { font-size: 15px; color: #444; }
 
-    button, a.button {
+    a.button, button {
       background: #2563eb;
       color: white;
       border: none;
@@ -38,13 +41,31 @@
       text-decoration: none;
       margin-top: 14px;
     }
+
     a.button.secondary { background: #0f172a; }
 
-    button:disabled { opacity: 0.6; cursor: not-allowed; }
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
 
-    .status { margin-top: 16px; font-weight: 600; }
+    .status {
+      margin-top: 16px;
+      font-weight: 600;
+    }
+
     .success { color: #16a34a; }
     .error { color: #dc2626; }
+
+    .consent {
+      margin-top: 16px;
+      text-align: left;
+      font-size: 14px;
+      color: #333;
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
 
     .legal {
       margin-top: 20px;
@@ -53,7 +74,6 @@
       display: none;
       text-align: left;
     }
-    .legal div { margin-top: 6px; }
   </style>
 </head>
 
@@ -62,16 +82,31 @@
   <h2>Review & Sign Contract</h2>
 
   <p>
-    Please review the contract before signing.
-    By clicking <strong>Sign Contract</strong>, you agree this is a legally
-    binding electronic signature.
+    Please review the contract carefully before signing.
   </p>
 
-  <a id="viewBtn" class="button secondary" target="_blank">📄 View Contract</a>
+  <!-- VIEW CONTRACT -->
+  <a id="viewBtn" class="button secondary" target="_blank">
+    📄 View Contract
+  </a>
+
+  <!-- LEGAL CONSENT CHECKBOX -->
+  <div class="consent">
+    <input type="checkbox" id="agreeBox" />
+    <label for="agreeBox">
+      I have read and understood the contract.  
+      By clicking <strong>Sign Contract</strong>, I agree to be legally bound by
+      all terms and conditions of this agreement and acknowledge that this
+      electronic signature has the same legal effect as a handwritten signature.
+    </label>
+  </div>
+
+  <!-- SIGN BUTTON -->
   <button id="signBtn" disabled>✍️ Sign Contract</button>
 
   <div id="status" class="status"></div>
 
+  <!-- AUDIT STAMP -->
   <div id="legalStamp" class="legal">
     <div><strong>Signed at:</strong> <span id="signedAt"></span></div>
     <div><strong>Device hash:</strong> <span id="deviceHash"></span></div>
@@ -79,52 +114,46 @@
 </div>
 
 <script>
+/* ===============================
+   READ PARAMS (IMPORTANT FIX)
+=============================== */
 const params = new URLSearchParams(window.location.search);
-const token = params.get("token");
+const token = params.get("signToken"); // ✅ FIXED
 const fileId = params.get("fileId");
 
+/* ===============================
+   ELEMENTS
+=============================== */
 const statusEl = document.getElementById("status");
 const signBtn = document.getElementById("signBtn");
 const viewBtn = document.getElementById("viewBtn");
+const agreeBox = document.getElementById("agreeBox");
 const legalStamp = document.getElementById("legalStamp");
 
+/* ===============================
+   BASIC LINK VALIDATION
+=============================== */
 if (!token || !fileId) {
   statusEl.textContent = "❌ Invalid or expired signing link";
   statusEl.className = "status error";
-  throw new Error("Missing token or fileId");
+  throw new Error("Missing fileId or signToken");
 }
 
+/* ===============================
+   VIEW CONTRACT LINK
+=============================== */
 viewBtn.href = `https://drive.google.com/file/d/${fileId}/preview`;
 
-// 🔐 VALIDATE TOKEN FIRST
-(async () => {
-  try {
-    const res = await fetch(
-      "https://velayudhansyam.app.n8n.cloud/webhook/contract-approval/validate",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          fileId,
-          token,
-          role: "contractor"
-        })
-      }
-    );
+/* ===============================
+   ENABLE SIGN ONLY IF CHECKED
+=============================== */
+agreeBox.addEventListener("change", () => {
+  signBtn.disabled = !agreeBox.checked;
+});
 
-    if (!res.ok) throw new Error("Invalid token");
-
-    signBtn.disabled = false;
-    statusEl.textContent = "✅ Contract ready for signing";
-    statusEl.className = "status success";
-
-  } catch {
-    statusEl.textContent = "❌ Invalid or expired signing link";
-    statusEl.className = "status error";
-  }
-})();
-
-// DEVICE FINGERPRINT
+/* ===============================
+   DEVICE FINGERPRINT
+=============================== */
 async function getDeviceFingerprint() {
   const msg =
     navigator.userAgent +
@@ -142,7 +171,9 @@ async function getDeviceFingerprint() {
     .join("");
 }
 
-// SIGN
+/* ===============================
+   SIGN CONTRACT
+=============================== */
 signBtn.onclick = async () => {
   try {
     signBtn.disabled = true;
@@ -158,10 +189,11 @@ signBtn.onclick = async () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           fileId,
-          token,
+          signToken: token,
           signedAt,
           deviceFingerprint,
-          intent: "I intend to sign and be legally bound"
+          consent:
+            "I have read and agree to be legally bound by this contract"
         })
       }
     );
