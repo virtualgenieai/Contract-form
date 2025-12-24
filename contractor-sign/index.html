@@ -13,7 +13,6 @@
       justify-content: center;
       padding: 40px;
     }
-
     .card {
       background: #ffffff;
       padding: 32px;
@@ -23,18 +22,10 @@
       box-shadow: 0 12px 35px rgba(0,0,0,0.08);
       text-align: center;
     }
+    h2 { margin-bottom: 12px; }
+    p { font-size: 15px; color: #444; }
 
-    h2 {
-      margin-bottom: 12px;
-    }
-
-    p {
-      font-size: 15px;
-      color: #444;
-    }
-
-    button,
-    a.button {
+    button, a.button {
       background: #2563eb;
       color: white;
       border: none;
@@ -47,28 +38,13 @@
       text-decoration: none;
       margin-top: 14px;
     }
+    a.button.secondary { background: #0f172a; }
 
-    a.button.secondary {
-      background: #0f172a;
-    }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
 
-    button:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-
-    .status {
-      margin-top: 16px;
-      font-weight: 600;
-    }
-
-    .success {
-      color: #16a34a;
-    }
-
-    .error {
-      color: #dc2626;
-    }
+    .status { margin-top: 16px; font-weight: 600; }
+    .success { color: #16a34a; }
+    .error { color: #dc2626; }
 
     .legal {
       margin-top: 20px;
@@ -77,137 +53,138 @@
       display: none;
       text-align: left;
     }
-
-    .legal div {
-      margin-top: 6px;
-    }
+    .legal div { margin-top: 6px; }
   </style>
 </head>
 
 <body>
-  <div class="card">
-    <h2>Review & Sign Contract</h2>
+<div class="card">
+  <h2>Review & Sign Contract</h2>
 
-    <p>
-      Please review the contract before signing.  
-      By clicking <strong>Sign Contract</strong>, you agree this is a legally
-      binding electronic signature.
-    </p>
+  <p>
+    Please review the contract before signing.
+    By clicking <strong>Sign Contract</strong>, you agree this is a legally
+    binding electronic signature.
+  </p>
 
-    <!-- VIEW CONTRACT (AVAILABLE IMMEDIATELY) -->
-    <a id="viewBtn" class="button secondary" target="_blank">
-      📄 View Contract
-    </a>
+  <a id="viewBtn" class="button secondary" target="_blank">📄 View Contract</a>
+  <button id="signBtn" disabled>✍️ Sign Contract</button>
 
-    <!-- SIGN BUTTON -->
-    <button id="signBtn">✍️ Sign Contract</button>
+  <div id="status" class="status"></div>
 
-    <div id="status" class="status"></div>
-
-    <!-- LEGAL STAMP -->
-    <div id="legalStamp" class="legal">
-      <div><strong>Signed at:</strong> <span id="signedAt"></span></div>
-      <div><strong>Device hash:</strong> <span id="deviceHash"></span></div>
-    </div>
+  <div id="legalStamp" class="legal">
+    <div><strong>Signed at:</strong> <span id="signedAt"></span></div>
+    <div><strong>Device hash:</strong> <span id="deviceHash"></span></div>
   </div>
+</div>
 
-  <script>
-    // ===============================
-    // READ TOKEN + FILEID FROM URL
-    // ===============================
-    const params = new URLSearchParams(window.location.search);
-    const token = params.get("token");
-    const fileId = params.get("fileId");
+<script>
+const params = new URLSearchParams(window.location.search);
+const token = params.get("token");
+const fileId = params.get("fileId");
 
-    const statusEl = document.getElementById("status");
-    const signBtn = document.getElementById("signBtn");
-    const legalStamp = document.getElementById("legalStamp");
-    const viewBtn = document.getElementById("viewBtn");
+const statusEl = document.getElementById("status");
+const signBtn = document.getElementById("signBtn");
+const viewBtn = document.getElementById("viewBtn");
+const legalStamp = document.getElementById("legalStamp");
 
-    if (!token || !fileId) {
-      statusEl.textContent = "❌ Invalid or expired signing link";
-      statusEl.className = "status error";
-      signBtn.disabled = true;
-      viewBtn.style.display = "none";
-      throw new Error("Missing token or fileId");
-    }
+if (!token || !fileId) {
+  statusEl.textContent = "❌ Invalid or expired signing link";
+  statusEl.className = "status error";
+  throw new Error("Missing token or fileId");
+}
 
-    // ===============================
-    // GOOGLE DRIVE PREVIEW LINK
-    // ===============================
-    viewBtn.href = `https://drive.google.com/file/d/${fileId}/preview`;
+viewBtn.href = `https://drive.google.com/file/d/${fileId}/preview`;
 
-    // ===============================
-    // DEVICE FINGERPRINT (AUDIT)
-    // ===============================
-    async function getDeviceFingerprint() {
-      const msg =
-        navigator.userAgent +
-        screen.width +
-        screen.height +
-        navigator.language;
-
-      const buf = await crypto.subtle.digest(
-        "SHA-256",
-        new TextEncoder().encode(msg)
-      );
-
-      return [...new Uint8Array(buf)]
-        .map(b => b.toString(16).padStart(2, "0"))
-        .join("");
-    }
-
-    // ===============================
-    // SIGN CONTRACT
-    // ===============================
-    signBtn.onclick = async () => {
-      try {
-        signBtn.disabled = true;
-        signBtn.textContent = "Signing…";
-
-        const signedAt = new Date().toISOString();
-        const deviceFingerprint = await getDeviceFingerprint();
-
-        const res = await fetch(
-          "https://velayudhansyam.app.n8n.cloud/webhook/contract-approval",
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              fileId,
-              token,
-              signedAt,
-              deviceFingerprint,
-              intent: "I intend to sign and be legally bound"
-            })
-          }
-        );
-
-        if (!res.ok) throw new Error("Webhook failed");
-
-        // ===============================
-        // SUCCESS UI
-        // ===============================
-        statusEl.textContent = "✅ Contract signed successfully";
-        statusEl.className = "status success";
-
-        signBtn.style.display = "none";
-
-        document.getElementById("signedAt").textContent = signedAt;
-        document.getElementById("deviceHash").textContent = deviceFingerprint;
-        legalStamp.style.display = "block";
-
-        // Update view label post-sign
-        viewBtn.textContent = "📄 View Signed Contract";
-
-      } catch (err) {
-        console.error(err);
-        statusEl.textContent = "❌ Signing failed. Please try again.";
-        statusEl.className = "status error";
-        signBtn.disabled = false;
-        signBtn.textContent = "✍️ Sign Contract";
+// 🔐 VALIDATE TOKEN FIRST
+(async () => {
+  try {
+    const res = await fetch(
+      "https://velayudhansyam.app.n8n.cloud/webhook/contract-approval/validate",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fileId,
+          token,
+          role: "contractor"
+        })
       }
-    };
-  </script>
+    );
+
+    if (!res.ok) throw new Error("Invalid token");
+
+    signBtn.disabled = false;
+    statusEl.textContent = "✅ Contract ready for signing";
+    statusEl.className = "status success";
+
+  } catch {
+    statusEl.textContent = "❌ Invalid or expired signing link";
+    statusEl.className = "status error";
+  }
+})();
+
+// DEVICE FINGERPRINT
+async function getDeviceFingerprint() {
+  const msg =
+    navigator.userAgent +
+    screen.width +
+    screen.height +
+    navigator.language;
+
+  const buf = await crypto.subtle.digest(
+    "SHA-256",
+    new TextEncoder().encode(msg)
+  );
+
+  return [...new Uint8Array(buf)]
+    .map(b => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+// SIGN
+signBtn.onclick = async () => {
+  try {
+    signBtn.disabled = true;
+    signBtn.textContent = "Signing…";
+
+    const signedAt = new Date().toISOString();
+    const deviceFingerprint = await getDeviceFingerprint();
+
+    const res = await fetch(
+      "https://velayudhansyam.app.n8n.cloud/webhook/contract-approval",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fileId,
+          token,
+          signedAt,
+          deviceFingerprint,
+          intent: "I intend to sign and be legally bound"
+        })
+      }
+    );
+
+    if (!res.ok) throw new Error("Signing failed");
+
+    statusEl.textContent = "✅ Contract signed successfully";
+    statusEl.className = "status success";
+
+    signBtn.style.display = "none";
+    document.getElementById("signedAt").textContent = signedAt;
+    document.getElementById("deviceHash").textContent = deviceFingerprint;
+    legalStamp.style.display = "block";
+
+    viewBtn.textContent = "📄 View Signed Contract";
+
+  } catch {
+    statusEl.textContent = "❌ Signing failed. Please try again.";
+    statusEl.className = "status error";
+    signBtn.disabled = false;
+    signBtn.textContent = "✍️ Sign Contract";
+  }
+};
+</script>
 </body>
 </html>
