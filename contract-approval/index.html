@@ -10,6 +10,7 @@
       font-family: Arial, sans-serif;
       text-align: center;
       padding: 40px;
+      background: #f7f7f7;
     }
     input {
       padding: 10px;
@@ -24,20 +25,31 @@
       font-size: 16px;
       cursor: pointer;
       text-decoration: none;
+      border-radius: 6px;
     }
     button {
       background: #28a745;
       color: white;
       border: none;
-      border-radius: 6px;
+    }
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
     }
     a {
       background: #007bff;
       color: white;
-      border-radius: 6px;
     }
     .error { color: red; }
     .success { color: green; }
+    .legal {
+      margin-top: 20px;
+      font-size: 14px;
+      max-width: 420px;
+      margin-left: auto;
+      margin-right: auto;
+      text-align: left;
+    }
   </style>
 </head>
 
@@ -48,11 +60,20 @@
 <div id="actions" style="display:none;">
   <a id="viewDraft" target="_blank">📄 View Draft Contract</a>
 
-  <p><strong>Type your full legal name to sign:</strong></p>
+  <p><strong>Type your full legal name:</strong></p>
   <input id="signerName" placeholder="Full legal name" />
 
+  <div class="legal">
+    <label>
+      <input type="checkbox" id="consentBox" />
+      I confirm that I have reviewed this Agreement and
+      <strong>intend to sign and be legally bound</strong>
+      by its terms under applicable electronic signature laws.
+    </label>
+  </div>
+
   <br />
-  <button id="approveBtn">✍️ Approve & Sign Contract</button>
+  <button id="approveBtn" disabled>✍️ Approve & Sign Contract</button>
 </div>
 
 <p id="status"></p>
@@ -67,6 +88,7 @@
   const approveBtn = document.getElementById("approveBtn");
   const viewDraft = document.getElementById("viewDraft");
   const signerInput = document.getElementById("signerName");
+  const consentBox = document.getElementById("consentBox");
 
   if (!fileId || !token) {
     statusEl.textContent = "❌ Invalid or expired link";
@@ -74,47 +96,79 @@
   } else {
     actionsEl.style.display = "block";
     viewDraft.href = `https://drive.google.com/file/d/${fileId}/view`;
-
-    approveBtn.onclick = async () => {
-      const signerName = signerInput.value.trim();
-
-      if (!signerName) {
-        alert("Please enter your full legal name.");
-        return;
-      }
-
-      approveBtn.disabled = true;
-      approveBtn.textContent = "Processing…";
-
-      try {
-        const res = await fetch(
-          "https://velayudhansyam.app.n8n.cloud/webhook/contract-approval",
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              fileId,
-              token,
-              signerName
-            })
-          }
-        );
-
-        if (!res.ok) throw new Error();
-
-        statusEl.textContent = "✅ Contract approved & legally signed";
-        statusEl.className = "success";
-        approveBtn.style.display = "none";
-        signerInput.disabled = true;
-
-      } catch {
-        statusEl.textContent = "❌ Approval failed";
-        statusEl.className = "error";
-        approveBtn.disabled = false;
-        approveBtn.textContent = "✍️ Approve & Sign Contract";
-      }
-    };
   }
+
+  consentBox.addEventListener("change", () => {
+    approveBtn.disabled = !consentBox.checked;
+  });
+
+  async function getDeviceFingerprint() {
+    const msg =
+      navigator.userAgent +
+      screen.width +
+      screen.height +
+      navigator.language;
+
+    const buf = await crypto.subtle.digest(
+      "SHA-256",
+      new TextEncoder().encode(msg)
+    );
+
+    return [...new Uint8Array(buf)]
+      .map(b => b.toString(16).padStart(2, "0"))
+      .join("");
+  }
+
+  approveBtn.onclick = async () => {
+    const signerName = signerInput.value.trim();
+
+    if (!signerName) {
+      alert("Please enter your full legal name.");
+      return;
+    }
+
+    approveBtn.disabled = true;
+    approveBtn.textContent = "Processing…";
+
+    try {
+      const signedAt = new Date().toISOString();
+      const deviceFingerprint = await getDeviceFingerprint();
+
+      const res = await fetch(
+        "https://velayudhansyam.app.n8n.cloud/webhook/contract-approval",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            fileId,
+            token,
+
+            // ✅ LEGAL SIGNATURE DATA
+            clientName: signerName,
+            clientEmail: "",
+
+            clientSignedAt: signedAt,
+            clientDeviceFingerprint: deviceFingerprint,
+            clientIntent: "I intend to sign and be legally bound"
+          })
+        }
+      );
+
+      if (!res.ok) throw new Error();
+
+      statusEl.textContent = "✅ Contract approved & legally signed";
+      statusEl.className = "success";
+      approveBtn.style.display = "none";
+      signerInput.disabled = true;
+      consentBox.disabled = true;
+
+    } catch {
+      statusEl.textContent = "❌ Approval failed";
+      statusEl.className = "error";
+      approveBtn.disabled = false;
+      approveBtn.textContent = "✍️ Approve & Sign Contract";
+    }
+  };
 </script>
 
 </body>
