@@ -68,7 +68,7 @@
       <input type="checkbox" id="consentBox" />
       I confirm that I have reviewed this Agreement and
       <strong>intend to sign and be legally bound</strong>
-      by its terms under applicable electronic signature laws.
+      by its terms pursuant to the U.S. ESIGN Act and UETA.
     </label>
   </div>
 
@@ -98,14 +98,16 @@
     viewDraft.href = `https://drive.google.com/file/d/${fileId}/view`;
   }
 
-  consentBox.addEventListener("change", () => {
-    approveBtn.disabled = !consentBox.checked;
-  });
+  function validate() {
+    approveBtn.disabled =
+      !consentBox.checked || !signerInput.value.trim();
+  }
+
+  signerInput.addEventListener("input", validate);
+  consentBox.addEventListener("change", validate);
 
   async function getDeviceFingerprintSafe() {
     try {
-      if (!crypto?.subtle) return "unavailable";
-
       const msg =
         navigator.userAgent +
         screen.width +
@@ -126,29 +128,29 @@
   }
 
   approveBtn.onclick = async () => {
-    const signerName = signerInput.value.trim();
-
-    if (!signerName) {
-      alert("Please enter your full legal name.");
-      return;
-    }
-
     approveBtn.disabled = true;
     approveBtn.textContent = "Processing…";
 
     const payload = {
       fileId,
       token,
-      clientName: signerName,
-      clientEmail: "",
-      clientSignedAt: new Date().toISOString(),
-      clientDeviceFingerprint: await getDeviceFingerprintSafe(),
-      clientIntent: "I intend to sign and be legally bound"
+
+      contractor_name: signerInput.value.trim(),
+      contractor_signed_at: new Date().toISOString(),
+
+      signature_intent:
+        "I intend to sign and be legally bound by this Agreement.",
+
+      contractor_device_fingerprint:
+        await getDeviceFingerprintSafe(),
+
+      contractor_user_agent: navigator.userAgent
+      // ⚠ IP ADDRESS SHOULD BE CAPTURED SERVER-SIDE IN n8n
     };
 
     try {
       const res = await fetch(
-        "https://virtgen.app.n8n.cloud/webhook/contract/create",
+        "https://virtgen.app.n8n.cloud/webhook/contract-approval",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -158,14 +160,16 @@
 
       if (!res.ok) throw new Error();
 
-      statusEl.textContent = "✅ Contract approved & legally signed";
+      statusEl.textContent =
+        "✅ Contract approved & legally signed";
       statusEl.className = "success";
+
       approveBtn.style.display = "none";
       signerInput.disabled = true;
       consentBox.disabled = true;
 
     } catch {
-      statusEl.textContent = "❌ Approval failed";
+      statusEl.textContent = "❌ Approval failed. Please try again.";
       statusEl.className = "error";
       approveBtn.disabled = false;
       approveBtn.textContent = "✍️ Approve & Sign Contract";
