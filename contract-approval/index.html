@@ -102,21 +102,27 @@
     approveBtn.disabled = !consentBox.checked;
   });
 
-  async function getDeviceFingerprint() {
-    const msg =
-      navigator.userAgent +
-      screen.width +
-      screen.height +
-      navigator.language;
+  async function getDeviceFingerprintSafe() {
+    try {
+      if (!crypto?.subtle) return "unavailable";
 
-    const buf = await crypto.subtle.digest(
-      "SHA-256",
-      new TextEncoder().encode(msg)
-    );
+      const msg =
+        navigator.userAgent +
+        screen.width +
+        screen.height +
+        navigator.language;
 
-    return [...new Uint8Array(buf)]
-      .map(b => b.toString(16).padStart(2, "0"))
-      .join("");
+      const buf = await crypto.subtle.digest(
+        "SHA-256",
+        new TextEncoder().encode(msg)
+      );
+
+      return [...new Uint8Array(buf)]
+        .map(b => b.toString(16).padStart(2, "0"))
+        .join("");
+    } catch {
+      return "unavailable";
+    }
   }
 
   approveBtn.onclick = async () => {
@@ -130,27 +136,23 @@
     approveBtn.disabled = true;
     approveBtn.textContent = "Processing…";
 
-    try {
-      const signedAt = new Date().toISOString();
-      const deviceFingerprint = await getDeviceFingerprint();
+    const payload = {
+      fileId,
+      token,
+      clientName: signerName,
+      clientEmail: "",
+      clientSignedAt: new Date().toISOString(),
+      clientDeviceFingerprint: await getDeviceFingerprintSafe(),
+      clientIntent: "I intend to sign and be legally bound"
+    };
 
+    try {
       const res = await fetch(
         "https://virtgen.app.n8n.cloud/webhook/contract/create",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            fileId,
-            token,
-
-            // ✅ LEGAL SIGNATURE DATA
-            clientName: signerName,
-            clientEmail: "",
-
-            clientSignedAt: signedAt,
-            clientDeviceFingerprint: deviceFingerprint,
-            clientIntent: "I intend to sign and be legally bound"
-          })
+          body: JSON.stringify(payload)
         }
       );
 
