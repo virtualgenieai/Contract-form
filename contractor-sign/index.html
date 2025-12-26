@@ -1,3 +1,4 @@
+<script>
 signBtn.onclick = async () => {
   try {
     signBtn.disabled = true;
@@ -7,17 +8,17 @@ signBtn.onclick = async () => {
     const deviceFingerprint = await getDeviceFingerprint();
 
     const res = await fetch(
-      "https://virtgen.app.n8n.cloud/webhook/contractor-approval",
+      "https://virtgen.app.n8n.cloud/webhook/contract-sign",
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          fileId,
+          fileId: fileId,
           signToken: token,
-          signedAt,
-          deviceFingerprint,
-          consent:
-            "I have read and agree to be legally bound by this contract"
+          contractor_signed_at: signedAt,
+          contractor_device_fingerprint: deviceFingerprint,
+          contractor_intent:
+            "I have read, understood, and agree to be legally bound by this contract"
         })
       }
     );
@@ -34,10 +35,11 @@ signBtn.onclick = async () => {
 
     viewBtn.textContent = "📄 View Signed Contract";
 
-  } catch {
+  } catch (err) {
     statusEl.textContent = "❌ Signing failed. Please try again.";
     statusEl.className = "status error";
     signBtn.disabled = false;
     signBtn.textContent = "✍️ Sign Contract";
   }
 };
+</script>
