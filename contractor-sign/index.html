@@ -1,4 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Contract Signing</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 24px;
+      background: #f9f9f9;
+    }
+    button {
+      padding: 12px 18px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .status {
+      margin-top: 16px;
+      font-weight: bold;
+    }
+    .success { color: green; }
+    .error { color: red; }
+    #legalStamp {
+      display: none;
+      margin-top: 20px;
+      font-size: 14px;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+
+<h2>Contract Signing</h2>
+
+<button id="signBtn">✍️ Sign Contract</button>
+
+<div id="status" class="status"></div>
+
+<div id="legalStamp">
+  <p><strong>Signed At:</strong> <span id="signedAt"></span></p>
+  <p><strong>Device Hash:</strong> <span id="deviceHash"></span></p>
+</div>
+
 <script>
+/* ---------- SAFE VARIABLE SETUP ---------- */
+const signBtn = document.getElementById("signBtn");
+const statusEl = document.getElementById("status");
+const legalStamp = document.getElementById("legalStamp");
+
+/* ---------- READ URL PARAMS ---------- */
+const params = new URLSearchParams(window.location.search);
+const fileId = params.get("fileId");
+const token = params.get("token");
+
+if (!fileId || !token) {
+  statusEl.textContent = "❌ Invalid signing link";
+  statusEl.className = "status error";
+  signBtn.style.display = "none";
+}
+
+/* ---------- MOCK FINGERPRINT (SAFE) ---------- */
+async function getDeviceFingerprint() {
+  return crypto.randomUUID();
+}
+
+/* ---------- CLICK HANDLER ---------- */
 signBtn.onclick = async () => {
   try {
     signBtn.disabled = true;
@@ -13,7 +79,7 @@ signBtn.onclick = async () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          fileId: fileId,
+          fileId,
           signToken: token,
           contractor_signed_at: signedAt,
           contractor_device_fingerprint: deviceFingerprint,
@@ -23,7 +89,7 @@ signBtn.onclick = async () => {
       }
     );
 
-    if (!res.ok) throw new Error("Signing failed");
+    if (!res.ok) throw new Error("Webhook failed");
 
     statusEl.textContent = "✅ Contract signed successfully";
     statusEl.className = "status success";
@@ -33,9 +99,8 @@ signBtn.onclick = async () => {
     document.getElementById("deviceHash").textContent = deviceFingerprint;
     legalStamp.style.display = "block";
 
-    viewBtn.textContent = "📄 View Signed Contract";
-
   } catch (err) {
+    console.error(err);
     statusEl.textContent = "❌ Signing failed. Please try again.";
     statusEl.className = "status error";
     signBtn.disabled = false;
@@ -43,3 +108,6 @@ signBtn.onclick = async () => {
   }
 };
 </script>
+
+</body>
+</html>
