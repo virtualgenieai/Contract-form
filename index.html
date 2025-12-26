@@ -48,7 +48,7 @@
       opacity: 0.85;
     }
 
-    input, textarea {
+    input, textarea, select {
       width: 100%;
       margin-top: 6px;
       padding: 12px 14px;
@@ -65,7 +65,7 @@
       min-height: 80px;
     }
 
-    input:focus, textarea:focus {
+    input:focus, textarea:focus, select:focus {
       box-shadow: 0 0 0 2px #2563eb;
     }
 
@@ -93,13 +93,8 @@
       display: none;
     }
 
-    .success {
-      color: #22c55e;
-    }
-
-    .error {
-      color: #ef4444;
-    }
+    .success { color: #22c55e; }
+    .error { color: #ef4444; }
   </style>
 </head>
 
@@ -117,6 +112,14 @@
 
       <label>Contractor Email</label>
       <input type="email" name="contractor_email" required>
+
+      <label>Type of Job</label>
+      <select name="job_type" required>
+        <option value="">Select job type</option>
+        <option value="Painting">Painting</option>
+        <option value="Electrical">Electrical</option>
+        <option value="Renovation">Renovation</option>
+      </select>
 
       <label>Property Address</label>
       <input type="text" name="property_address" required>
@@ -162,6 +165,7 @@
     errorBox.style.display = "none";
 
     const data = Object.fromEntries(new FormData(form).entries());
+
     data.scope_items = data.scope_items
       .split("\n")
       .map(s => s.trim())
