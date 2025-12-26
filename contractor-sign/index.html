@@ -25,6 +25,8 @@ signBtn.onclick = async () => {
 
     if (!res.ok) throw new Error("Signing failed");
 
+    const data = await res.json(); // 👈 important
+
     statusEl.textContent = "✅ Contract signed successfully";
     statusEl.className = "status success";
 
@@ -33,9 +35,17 @@ signBtn.onclick = async () => {
     document.getElementById("deviceHash").textContent = deviceFingerprint;
     legalStamp.style.display = "block";
 
+    // If n8n sends back the fileId or view URL
+    if (data?.fileId) {
+      viewBtn.href = `https://drive.google.com/file/d/${data.fileId}/view`;
+      viewBtn.target = "_blank";
+      viewBtn.style.display = "inline-block";
+    }
+
     viewBtn.textContent = "📄 View Signed Contract";
 
   } catch (err) {
+    console.error(err);
     statusEl.textContent = "❌ Signing failed. Please try again.";
     statusEl.className = "status error";
     signBtn.disabled = false;
